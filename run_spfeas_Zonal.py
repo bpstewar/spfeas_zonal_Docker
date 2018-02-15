@@ -13,9 +13,7 @@ from rasterio.features import rasterize
 
 from gbdx_task_interface import GbdxTaskInterface
 
-class SpFeasTask(GbdxTaskInterface):
-    
-    def zonalStats(inShp, inRaster, bandNum=1, reProj = False, minVal = '', rastType='N', verbose=False):
+def zonalStats(inShp, inRaster, bandNum=1, reProj = False, minVal = '', rastType='N', verbose=False):
         outputData=[]
         with rasterio.open(inRaster, 'r') as curRaster:
             inVector = gpd.read_file(inShp) 
@@ -29,7 +27,7 @@ class SpFeasTask(GbdxTaskInterface):
             for geometry in inVector['geometry']:
                 fCount = fCount + 1
                 if fCount % 100 == 0 and verbose:
-                    tPrint("Processing %s of %s" % (fCount, tCount) )
+                    print("Processing %s of %s" % (fCount, tCount) )
                 # get pixel coordinates of the geometry's bounding box
                 ul = curRaster.index(*geometry.bounds[0:2])
                 lr = curRaster.index(*geometry.bounds[2:4])
@@ -68,10 +66,13 @@ class SpFeasTask(GbdxTaskInterface):
                     outputData.append(results)
                     
                 except Exception as e: 
-                    tPrint("Error %s: %s" % (fCount, e.message) )                               
+                    print("Error %s: %s" % (fCount, e.message) )                               
                     outputData.append([-1, -1, -1, -1])
                 
         return outputData   
+    
+
+class SpFeasTask(GbdxTaskInterface):
     
     def invoke(self):
 
@@ -94,7 +95,7 @@ class SpFeasTask(GbdxTaskInterface):
         for bndCnt in range(1, totalBands):    
             print ("%s of %s" % (bndCnt, totalBands))
             # Run zonal statistics on raster using shapefile
-            results = self.zonalStats(inputShape, input_image, bndCnt, True)
+            results = zonalStats(input_shape, input_image, bndCnt, True)
             allRes.append(results)
             allTitles.append("b%s_SUM" % bndCnt, "b%s_MIN" % bndCnt, "b%s_MAX" % bndCnt, "b%s_MEAN" % bndCnt, "b%s_SD" % bndCnt)
             
