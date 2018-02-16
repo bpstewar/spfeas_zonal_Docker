@@ -36,41 +36,42 @@ def zonalStats(inShp, inRaster, bandNum=1, reProj = False, minVal = '', rastType
 
                 # read the subset of the data into a numpy array
                 window = ((lr[0], ul[0]+1), (ul[1], lr[1]+1))
-                try:
-                    data = curRaster.read(bandNum, window=window)
-                    # create an affine transform for the subset data
-                    t = curRaster.affine
-                    shifted_affine = Affine(t.a, t.b, t.c+ul[1]*t.a, t.d, t.e, t.f+lr[0]*t.e)
+                #try:
+                data = curRaster.read(bandNum, window=window)
+                # create an affine transform for the subset data
+                t = curRaster.affine
+                shifted_affine = Affine(t.a, t.b, t.c+ul[1]*t.a, t.d, t.e, t.f+lr[0]*t.e)
 
-                    # rasterize the geometry
-                    mask = rasterize(
-                        [(geometry, 0)],
-                        out_shape=data.shape,
-                        transform=shifted_affine,
-                        fill=1,
-                        all_touched=True,
-                        dtype=numpy.uint8)
+                # rasterize the geometry
+                mask = rasterize(
+                    [(geometry, 0)],
+                    out_shape=data.shape,
+                    transform=shifted_affine,
+                    fill=1,
+                    all_touched=True,
+                    dtype=numpy.uint8)
 
-                    # create a masked numpy array
-                    masked_data = numpy.ma.array(data=data, mask=mask.astype(bool))
-                    if rastType == 'N':                
-                        if minVal != '':
-                            masked_data = numpy.ma.masked_where(masked_data < minVal, masked_data)
-                            if masked_data.count() > 0:                        
-                                results = [masked_data.sum(), masked_data.min(), masked_data.max(), masked_data.mean()]
-                            else :
-                                results = [-1, -1, -1, -1]
-                        else:
+                # create a masked numpy array
+                masked_data = numpy.ma.array(data=data, mask=mask.astype(bool))
+                if rastType == 'N':                
+                    if minVal != '':
+                        masked_data = numpy.ma.masked_where(masked_data < minVal, masked_data)
+                        if masked_data.count() > 0:                        
                             results = [masked_data.sum(), masked_data.min(), masked_data.max(), masked_data.mean()]
-                    if rastType == 'C':
-                        results = numpy.unique(masked_data, return_counts=True)                    
-                    
-                    outputData.append(results)
-                    
+                        else :
+                            results = [-1, -1, -1, -1]
+                    else:
+                        results = [masked_data.sum(), masked_data.min(), masked_data.max(), masked_data.mean()]
+                if rastType == 'C':
+                    results = numpy.unique(masked_data, return_counts=True)                    
+                
+                outputData.append(results)
+                
+                '''
                 except Exception as e: 
                     print("Error %s: %s" % (fCount, e.message) )                               
                     outputData.append([-1, -1, -1, -1])
-                
+                '''
         return outputData   
     
 input_image = r"C:\Users\mapmill\Documents\GitHub\spfeas-zonal\SampleData\temp.vrt"

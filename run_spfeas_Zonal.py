@@ -1,22 +1,22 @@
 #!/usr/bin/env python
 
-import os
+import os, time
 import fnmatch
 import json
 
 import rasterio
 import numpy
 import geopandas as gpd
+import pandas as pd
 
 from affine import Affine
 from rasterio.features import rasterize
 
 from gbdx_task_interface import GbdxTaskInterface
 
-def zonalStats(inShp, inRaster, bandNum=1, reProj = False, minVal = '', rastType='N', verbose=False):
+def zonalStats(inVector, inRaster, bandNum=1, reProj = False, minVal = '', rastType='N', verbose=False):
         outputData=[]
         with rasterio.open(inRaster, 'r') as curRaster:
-            inVector = gpd.read_file(inShp) 
             if inVector.crs != curRaster.crs:
                 if reProj:
                     inVector = inVector.to_crs(curRaster.crs)
@@ -68,7 +68,6 @@ def zonalStats(inShp, inRaster, bandNum=1, reProj = False, minVal = '', rastType
                 except Exception as e: 
                     print("Error %s: %s" % (fCount, e.message) )                               
                     outputData.append([-1, -1, -1, -1])
-                
         return outputData   
     
 
@@ -86,21 +85,24 @@ class SpFeasTask(GbdxTaskInterface):
         input_image = os.path.join(input_dir, fnmatch.filter(os.listdir(input_dir), "*.vrt")[0])
 
         # Get the input shapefile
-        input_shape_folder = self.get_input_data_port('rasterIn', default="/mnt/work/input")       
+        input_shape_folder = self.get_input_data_port('shapeIn', default="/mnt/work/input")       
         input_shape = os.path.join(input_dir, fnmatch.filter(os.listdir(input_dir), "*.shp")[0])
         
         allRes = []
         allTitles = []
         totalBands = rasterio.open(input_image, 'r').count + 1
+        inputShapeD = gpd.read_file(input_shape)
+        origD = inputShapeD
         for bndCnt in range(1, totalBands):    
-            print ("%s of %s" % (bndCnt, totalBands))
             # Run zonal statistics on raster using shapefile
-            results = zonalStats(input_shape, input_image, bndCnt, True)
+            results = zonalStats(origD, input_image, bndCnt, True)
             allRes.append(results)
-            allTitles.append("b%s_SUM" % bndCnt, "b%s_MIN" % bndCnt, "b%s_MAX" % bndCnt, "b%s_MEAN" % bndCnt, "b%s_SD" % bndCnt)
-            
-        finalRes = pd.DataFrame(allRes, columns=allTitles)
-        finalRes.to_csv(os.path.join(output_folder, "Summarize_spFeas.csv"))
+            columnNames = ["b%s_SUM" % bndCnt, "b%s_MIN" % bndCnt, "b%s_MAX" % bndCnt, "b%s_MEAN" % bndCnt]            
+            curRes = pd.DataFrame(results, columns = columnNames)
+            inputShapeD = pd.concat([inputShapeD, curRes], axis=1)
+        
+        #inputShapeD.drop('geometry', 1)
+        inputShapeD.to_csv(os.path.join(output_folder, "Summarize_spFeas.csv"))
         outJSON = { "status": "success", "reason": "cause you rock!" }
         
         #Write status file as output

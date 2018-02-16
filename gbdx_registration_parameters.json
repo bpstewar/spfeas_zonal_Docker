@@ -1,0 +1,40 @@
+{
+    "name": "spfeas",
+    "version":"0.0.1",
+    "description": "Calculates a series of texture rasters based on input image",
+    "properties": {
+        "isPublic": false,
+        "timeout": 7200
+    },
+    "inputPortDescriptors": [
+        {
+            "name": "rasterIn",
+            "type": "directory",
+            "description": "Input data directory with the VRT to process",
+            "required": true
+        },
+        {
+            "name": "shapeIn",
+            "type": "directory",
+            "description": "Input data directory with the shapefile to process",
+            "required": true
+        }
+    ],
+    "outputPortDescriptors": [
+        {
+            "name": "data_out",
+            "type": "directory",
+            "description": "Output data directory."
+        }
+    ],
+    "containerDescriptors": [
+        {
+            "type": "DOCKER",
+            "properties": {
+                "image": "geographyis/spfeas_zonal"
+            },
+            "command": "",
+            "isPublic": true
+        }
+    ]
+}
