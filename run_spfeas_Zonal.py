@@ -3,12 +3,14 @@
 import os, time
 import fnmatch
 import json
+import logging
 
 import rasterio
 import numpy
 import geopandas as gpd
 import pandas as pd
 
+from time import gmtime, strftime
 from affine import Affine
 from rasterio.features import rasterize
 
@@ -26,6 +28,7 @@ def zonalStats(inVector, inRaster, bandNum=1, reProj = False, minVal = '', rastT
             tCount = len(inVector['geometry'])
             for geometry in inVector['geometry']:
                 fCount = fCount + 1
+                logging.info("Processing %s of %s" % (fCount, tCount))
                 if fCount % 100 == 0 and verbose:
                     print("Processing %s of %s" % (fCount, tCount) )
                 # get pixel coordinates of the geometry's bounding box
@@ -66,50 +69,59 @@ def zonalStats(inVector, inRaster, bandNum=1, reProj = False, minVal = '', rastT
                     outputData.append(results)
                     
                 except Exception as e: 
-                    print("Error %s: %s" % (fCount, e.message) )                               
+                    logging.info("Error %s: %s" % (fCount, e.message) )                               
                     outputData.append([-1, -1, -1, -1])
         return outputData   
     
 
 class SpFeasTask(GbdxTaskInterface):
     
-    def invoke(self):
-
+    def invoke(self):        
         # Create the output folder  
         output_folder = self.get_output_data_port('data_out')
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
-
+        logFile = os.path.join(output_folder, "zonal_log_%s.log" % strftime("%Y_%m_%d_%H_%M_%S", gmtime()))
+        logging.basicConfig(filename=logFile, level=logging.INFO) 
+        logging.info("Created output folder %s" % output_folder)
+        
         # Get the input image
-        input_dir = self.get_input_data_port('rasterIn', default="/mnt/work/input")       
+        input_dir = self.get_input_data_port('rasterIn', default="/mnt/work/input") 
+        print input_dir
+        print os.listdir(input_dir)
         input_image = os.path.join(input_dir, fnmatch.filter(os.listdir(input_dir), "*.vrt")[0])
 
         # Get the input shapefile
         input_shape_folder = self.get_input_data_port('shapeIn', default="/mnt/work/input")       
         input_shape = os.path.join(input_dir, fnmatch.filter(os.listdir(input_dir), "*.shp")[0])
         
+        logging.info("Found input image %s" % input_image)
+        logging.info("Found input shapefile %s" % input_shape)
         allRes = []
         allTitles = []
-        totalBands = rasterio.open(input_image, 'r').count + 1
-        inputShapeD = gpd.read_file(input_shape)
-        origD = inputShapeD
-        for bndCnt in range(1, totalBands):    
-            # Run zonal statistics on raster using shapefile
-            results = zonalStats(origD, input_image, bndCnt, True)
-            allRes.append(results)
-            columnNames = ["b%s_SUM" % bndCnt, "b%s_MIN" % bndCnt, "b%s_MAX" % bndCnt, "b%s_MEAN" % bndCnt]            
-            curRes = pd.DataFrame(results, columns = columnNames)
-            inputShapeD = pd.concat([inputShapeD, curRes], axis=1)
-        
-        #inputShapeD.drop('geometry', 1)
-        inputShapeD.to_csv(os.path.join(output_folder, "Summarize_spFeas.csv"))
-        outJSON = { "status": "success", "reason": "cause you rock!" }
-        
+        try:
+            totalBands = rasterio.open(input_image, 'r').count + 1
+            inputShapeD = gpd.read_file(input_shape)
+            origD = inputShapeD
+            for bndCnt in range(1, totalBands):    
+                logging.info("Looping through band %s of %s" % (bndCnt, totalBands))
+                # Run zonal statistics on raster using shapefile
+                results = zonalStats(origD, input_image, bndCnt, True)
+                allRes.append(results)
+                columnNames = ["b%s_SUM" % bndCnt, "b%s_MIN" % bndCnt, "b%s_MAX" % bndCnt, "b%s_MEAN" % bndCnt]            
+                curRes = pd.DataFrame(results, columns = columnNames)
+                inputShapeD = pd.concat([inputShapeD, curRes], axis=1)
+            
+            #inputShapeD.drop('geometry', 1)
+            inputShapeD.to_csv(os.path.join(output_folder, "Summarize_spFeas.csv"))
+            outJSON = { "status": "success", "reason": "cause you rock!" }
+        except Exception as e:
+            logging.warning(e.message)
+            outJSON = { "status": "failed", "reason": e.message }
         #Write status file as output
         with open("/mnt/work/status.json", 'w') as statusFile:
             json.dump(outJSON, statusFile)
             
-if __name__ == '__main__':
-
+if __name__ == '__main__':    
     with SpFeasTask() as task:
         task.invoke()

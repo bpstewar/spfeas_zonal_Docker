@@ -33,9 +33,7 @@ WORKDIR /build3rd/gbdx-task-interface/
 RUN ["/bin/bash", "-c", "source activate spfeasenv && python setup.py build && python setup.py install"]
 
 # Activate the virtual environment and install Anaconda libraries
-#RUN ["/bin/bash", "-c", "source activate spfeasenv && conda install --name spfeasenv certifi -y"] 
 RUN ["/bin/bash", "-c", "source activate spfeasenv && pip install geopandas"] 
-#RUN ["/bin/bash", "-c", "source activate spfeasenv && conda install --name spfeasenv -c conda-forge geopandas -y"] 
 RUN ["/bin/bash", "-c", "source activate spfeasenv && conda install --name spfeasenv rasterio -y"] 
 
 ADD /SampleData/ /mnt/work/input
@@ -45,5 +43,5 @@ WORKDIR /root
 COPY ./run_spfeas_Zonal.py .
 RUN chmod +x run_spfeas_Zonal.py
 
-ENTRYPOINT [ "/bin/bash", "-c" ]
-CMD ["source activate spfeasenv && exec python run_spfeas_Zonal.py"]
+#ENTRYPOINT [ "/bin/bash", "-c" ]
+#CMD ["source activate spfeasenv && exec python run_spfeas_Zonal.py"]
