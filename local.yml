@@ -8,3 +8,4 @@ services:
 
     volumes:
       - .:/mnt/work/input
+      - ./temp:/mnt/work/output
