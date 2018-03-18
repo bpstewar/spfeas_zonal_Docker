@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  spfeas:
+    image: spfeas:0.2.6
+    volumes: 
+      - ./SampleData:/data/input/data_in
+      - ./temp:/mnt/work/output
+
+  spfeas_zonal:
+    image: spfeas_zonal:0.2.6
+    depends_on: 
+      - spfeas
+
+    volumes:
+      - ./temp:/mnt/work/input
+      - ./temp:/mnt/work/output

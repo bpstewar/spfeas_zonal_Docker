@@ -119,7 +119,7 @@ class SpFeasTask(GbdxTaskInterface):
             logging.warning(e.message)
             outJSON = { "status": "failed", "reason": e.message }
         #Write status file as output
-        with open("/mnt/work/status.json", 'w') as statusFile:
+        with open("/mnt/work/status_zonal.json", 'w') as statusFile:
             json.dump(outJSON, statusFile)
             
 if __name__ == '__main__':    

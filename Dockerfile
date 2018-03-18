@@ -8,7 +8,14 @@ VOLUME /mnt/work/output
 
 # Install Linux build files for compiling Cython extensions
 RUN apt-get update -y
-RUN apt-get install python-dev apt-utils libc-dev linux-headers-amd64 gcc -y
+RUN apt-get install python-dev apt-utils libc-dev linux-headers-amd64 gcc wget -y
+
+# Dockerize
+
+ENV DOCKERIZE_VERSION v0.6.0
+RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
+    && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
+    && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
 
 # Install Anaconda
 #RUN echo "export PATH=/root/anaconda2/bin:$PATH" > /etc/profile.d/conda.sh && \
@@ -47,4 +54,4 @@ COPY ./run_spfeas_Zonal_testing.py .
 RUN chmod +x run_spfeas_Zonal_testing.py
 
 ENTRYPOINT [ "/bin/bash", "-c" ]
-CMD ["source activate spfeasenv && exec python run_spfeas_Zonal_testing.py"]
+CMD ["source activate spfeasenv && dockerize -wait file:///mnt/work/output/status.json -timeout 60s python run_spfeas_Zonal_testing.py"]
