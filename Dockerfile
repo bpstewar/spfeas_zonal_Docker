@@ -54,4 +54,4 @@ COPY ./run_spfeas_Zonal_testing.py .
 RUN chmod +x run_spfeas_Zonal_testing.py
 
 ENTRYPOINT [ "/bin/bash", "-c" ]
-CMD ["source activate spfeasenv && dockerize -wait file:///mnt/work/output/status.json -timeout 60s python run_spfeas_Zonal_testing.py"]
+CMD ["source activate spfeasenv && dockerize -wait file:///mnt/work/input/status.json -timeout 60s python run_spfeas_Zonal_testing.py"]

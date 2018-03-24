@@ -76,7 +76,10 @@ def zonalStats(inShp, inRaster, bandNum=1, reProj = False, minVal = '', rastType
                 '''
         return outputData
 
-input_image = r'/mnt/work/input/SampleData/temp.vrt'
+input_dir = r'/mnt/work/input/data_out/'
+# input_image = r'/mnt/work/input/temp.vrt'
+input_image = os.path.join(input_dir, fnmatch.filter(
+    os.listdir(input_dir), "*.vrt")[0])
 input_shape = r'/mnt/work/input/SampleData/agebs_val_muni.shp'
 
 totalBands = rasterio.open(input_image, 'r').count + 1

@@ -1,17 +1,28 @@
-version: '3'
+version: '3.2'
 
 services:
   spfeas:
-    image: spfeas:0.2.6
+    image: bjohare/spfeas:0.2.6
     volumes: 
-      - ./SampleData:/data/input/data_in
-      - ./temp:/mnt/work/output
+      - type: bind
+        source: ./spfeas_in
+        target: /mnt/work/input
+
+      - type: bind
+        source: ./temp
+        target: /mnt/work/output
 
   spfeas_zonal:
-    image: spfeas_zonal:0.2.6
+    image: bjohare/spfeas_zonal:latest
     depends_on: 
       - spfeas
 
     volumes:
-      - ./temp:/mnt/work/input
-      - ./temp:/mnt/work/output
+      - type: bind
+        source: ./temp
+        target: /mnt/work/input
+
+      - type: bind
+        source: ./temp
+        target: /mnt/work/output
+
