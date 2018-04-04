@@ -3,7 +3,7 @@
 1. Add the sample tif to the **spfeas_in** folder.
 2. Run **./execute_locally.sh**
 
-The ** ./execute_locally.sh ** script removes the **temp** directory
+The **./execute_locally.sh** script removes the **temp** directory
 if it exists. It then runs *docker-compose* against the **docker-compose.yml**
 file. This file defines two services run in sequence.
 The first is a custom build of **spfeas** followed by **spfeas_zonal**. The
