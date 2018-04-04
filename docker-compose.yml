@@ -13,7 +13,10 @@ services:
         target: /mnt/work/output
 
   spfeas_zonal:
-    image: bjohare/spfeas_zonal:latest
+    # image: bjohare/spfeas_zonal:latest
+    build:
+      context: .
+      dockerfile: ./Dockerfile
     depends_on: 
       - spfeas
 
@@ -21,6 +24,10 @@ services:
       - type: bind
         source: ./temp
         target: /mnt/work/input
+
+      - type: bind
+        source: ./test_shape
+        target: /mnt/shape
 
       - type: bind
         source: ./temp

@@ -12,6 +12,7 @@ import pdb
 import rasterio
 import numpy
 import geopandas as gpd
+import pandas as pd
 
 from affine import Affine
 from rasterio.features import rasterize
@@ -42,16 +43,18 @@ def zonalStats(inShp, inRaster, bandNum=1, reProj = False, minVal = '', rastType
                 # create an affine transform for the subset data
                 t = curRaster.affine
                 shifted_affine = Affine(t.a, t.b, t.c+ul[1]*t.a, t.d, t.e, t.f+lr[0]*t.e)
-                print geometry.wkt
 
                 # rasterize the geometry
-                mask = rasterize(
-                    [(geometry, 0)],
-                    out_shape=data.shape,
-                    transform=shifted_affine,
-                    fill=1,
-                    all_touched=True,
-                    dtype=numpy.uint8)
+		try:
+                	mask = rasterize(
+                    		[(geometry, 0)],
+                    		out_shape=data.shape,
+                    		transform=shifted_affine,
+                    		fill=1,
+                    		all_touched=True,
+                   		dtype=numpy.uint8)
+		except:
+			continue
 
                 # create a masked numpy array
                 masked_data = numpy.ma.array(data=data, mask=mask.astype(bool))
@@ -80,16 +83,24 @@ input_dir = r'/mnt/work/input/data_out/'
 # input_image = r'/mnt/work/input/temp.vrt'
 input_image = os.path.join(input_dir, fnmatch.filter(
     os.listdir(input_dir), "*.vrt")[0])
-input_shape = r'/mnt/work/input/SampleData/agebs_val_muni.shp'
+# input_shape = r'/mnt/work/input/SampleData/agebs_val_muni.shp'
+input_shape = r'/mnt/shape/test.shp'
+
+output_folder = r'/mnt/work/output'
 
 totalBands = rasterio.open(input_image, 'r').count + 1
+allRes = []
+allTitles = []
 for bndCnt in range(1, totalBands):
     print ("%s of %s" % (bndCnt, totalBands))
     # Run zonal statistics on raster using shapefile
-    results = zonalStats(input_shape, input_image, bndCnt, True)
+    #import pdb
+    #pdb.set_trace()
+    results = zonalStats(input_shape, input_image, bndCnt, True, verbose=True)
     allRes.append(results)
-    allTitles.append("b%s_SUM" % bndCnt, "b%s_MIN" % bndCnt, "b%s_MAX" % bndCnt, "b%s_MEAN" % bndCnt, "b%s_SD" % bndCnt)
+    allTitles.append(["b%s_SUM" % bndCnt, "b%s_MIN" % bndCnt, "b%s_MAX" % bndCnt, "b%s_MEAN" % bndCnt])
 
-finalRes = pd.DataFrame(allRes, columns=allTitles)
+#finalRes = pd.DataFrame(allRes, columns=allTitles)
+finalRes = pd.DataFrame(allRes)
 finalRes.to_csv(os.path.join(output_folder, "Summarize_spFeas.csv"))
 outJSON = { "status": "success", "reason": "cause you rock!" }
